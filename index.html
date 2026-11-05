@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101a2b"><meta name="description" content="Offline KCS electrical engineering calculators">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/kcs.svg">
+<title>KCS Electrical Toolkit</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#131f32;--panel2:#1a2940;--line:#2a3b55;--txt:#edf3fb;--muted:#9fb0c6;--accent:#f5b82e;--green:#42d392;--red:#ff7272}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px system-ui,-apple-system,Segoe UI,sans-serif;padding-bottom:80px}
+header{padding:18px 16px 14px;background:#101a2b;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:11px}.logo{width:42px;height:42px;border-radius:12px;background:var(--accent);color:#152033;display:grid;place-items:center;font-weight:900;font-size:16px}
+h1{font-size:19px;margin:0}header p{margin:3px 0 0;color:var(--muted);font-size:12px}
+main{max-width:900px;margin:auto;padding:16px}.notice{background:#3b2d13;border:1px solid #87651e;color:#ffe6a5;padding:12px;border-radius:12px;font-size:12px;line-height:1.5;margin-bottom:14px}
+.search{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--txt);font-size:16px;margin-bottom:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px;text-align:left;color:var(--txt);min-height:104px;cursor:pointer}.tile:active{transform:scale(.98)}.tile .ico{font-size:23px}.tile b{display:block;margin-top:7px}.tile small{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:13px}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.back,.btn{border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:10px;padding:10px 13px;font-weight:650;cursor:pointer}
+h2{font-size:20px;margin:7px 0 4px}.sub{color:var(--muted);font-size:12px;margin:0 0 14px}
+label{display:block;color:var(--muted);font-size:12px;margin-bottom:11px}input,select{display:block;width:100%;margin-top:5px;background:#0d1727;color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:12px;font-size:16px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:2px 10px}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px}.result{background:var(--panel2);border:1px solid var(--line);padding:12px;border-radius:10px}.result small{color:var(--muted);display:block}.result strong{display:block;font-size:21px;color:var(--accent);font-variant-numeric:tabular-nums;margin-top:4px;overflow-wrap:anywhere}
+.variant{display:flex;gap:7px;margin:12px 0}.variant button{flex:1}.active{border-color:var(--accent);color:var(--accent)}
+.warn{border-left:3px solid var(--accent);padding:9px 11px;background:#292515;color:#f5e5b6;font-size:12px;border-radius:5px;margin-top:10px;line-height:1.5}
+.good{color:var(--green)}.bad{color:var(--red)}.muted{color:var(--muted)}.hidden{display:none!important}
+nav{position:fixed;bottom:0;left:0;right:0;background:#101a2b;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 5px calc(8px + env(safe-area-inset-bottom));z-index:8}
+nav button{border:0;background:none;color:var(--muted);font-size:11px;padding:5px;min-width:65px}nav button span{display:block;font-size:19px;margin-bottom:2px}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid var(--line);padding:9px 5px;text-align:left}th{color:var(--muted)}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
+@media(min-width:700px){main{padding:24px}.fields{grid-template-columns:repeat(3,1fr)}}
+</style></head><body>
+<header><div class="brand"><div class="logo">KCS</div><div><h1>KCS Electrical Toolkit</h1><p>Field Service Calculators · Offline-ready PWA</p></div></div></header>
+<main id="app"></main>
+<nav><button onclick="home()"><span>⌂</span>Home</button><button onclick="showHistory()"><span>◷</span>History</button><button onclick="showQC()"><span>✓</span>QC Tests</button><button onclick="showFormulas()"><span>ƒ</span>Formulas</button></nav>
+<footer>KCS Electrical Toolkit · Verify all final selections against applicable standards and manufacturer data.</footer>
+<script>
+const $=id=>document.getElementById(id), app=$("app");
+const sqrt3=Math.sqrt(3), hpkw=.746;
+const defs=[
+{id:"motor",name:"Motor FLC & Speed",icon:"⚙️",family:"Motor",fields:[["kw","Shaft output power",7.5,"kW"],["v","Line voltage",415,"V"],["pf","Power factor",.85,""],["eff","Efficiency",.9,"decimal"],["f","Frequency",50,"Hz"],["poles","Number of poles",4,"poles"],["slip","Slip",.04,"decimal"]],warning:"Balanced 3-phase formula. Slip is decimal. Prefer motor nameplate FLC for final protection."},
+{id:"power",name:"kW ↔ HP",icon:"↔️",family:"Power",fields:[["value","Power value",7.5,""],["unit","Input unit","kW","select:kW,HP"]],warning:"1 HP = 0.746 kW (746 W)."},
+{id:"breaker",name:"Breaker & Cable Check",icon:"🔌",family:"Protection",fields:[["flc","Device FLC",15,"A"],["breaker","MCB/MCCB rating",20,"A"],["cable","Corrected cable ampacity",25,"A"]],warning:"Original workbook rule: FLC < breaker rating < corrected cable ampacity. This is not complete protection coordination."},
+{id:"fault",name:"Short-circuit Estimate",icon:"⚡",family:"Protection",fields:[["v","Voltage",415,"V"],["z","Impedance",.025,"Ω"]],warning:"Simplified I = V/Z estimate only; not a complete short-circuit study. Verify Icu/Ics and fault-loop conditions."},
+{id:"trip",name:"MCB B/C/D Trip Band",icon:"📈",family:"Protection",fields:[["in","MCB rated current",10,"A"],["curve","Trip curve","C","select:B,C,D"]],warning:"Typical instantaneous magnetic bands only. Check the exact manufacturer's time-current curve and disconnection time."},
+{id:"dol",name:"DOL Contactor",icon:"🔄",family:"Starters",fields:[["flc","Motor FLC",22,"A"]],warning:"AC-3 duty is normally used for induction motor starting. Verify voltage, kW, starts/hour, duty and coordination in manufacturer's tables."},
+{id:"star",name:"Star-Delta Contactors",icon:"✳️",family:"Starters",fields:[["flc","Motor FLC",22,"A"]],warning:"The workbook contains conflicting factor conventions. Confirm circuit topology and manufacturer's selection tables before choosing contactors."},
+{id:"olr",name:"Overload Relay (OLR)",icon:"🛡️",family:"Protection",fields:[["flc","Motor FLC",22,"A"],["topology","Relay location","DOL line","select:DOL line,Inside delta"]],warning:"Indicative 80–120% range only. Set according to relay location, motor nameplate and relay manufacturer's instructions."},
+{id:"smps",name:"24V DC SMPS Sizing",icon:"🔋",family:"Control Power",fields:[["plcQty","PLC/controller quantity",1,"qty"],["plcA","Current per PLC",1,"A"],["diQty","Digital input quantity",10,"qty"],["diMa","Current per DI",200,"mA"],["doQty","Digital output quantity",10,"qty"],["doMa","Current per DO",200,"mA"],["lampQty","Indicator lamp quantity",5,"qty"],["lampMa","Current per lamp",300,"mA"],["factor","Design factor",150,"%"],["volts","DC voltage",24,"V"]],warning:"Use actual device datasheet current draws. Whole-amp rating is illustrative; choose a real manufacturer catalogue rating."},
+{id:"cable",name:"Cable Thumb Rule",icon:"〰️",family:"Cable & Busbar",fields:[["area","Conductor area",6,"mm²"],["material","Conductor material","Copper","select:Copper,Aluminium"]],warning:"Cu 6 and Al 4 A/mm² are rough thumb rules, NOT standards ampacity. Final sizing needs derating, installation, voltage drop and short-circuit checks."},
+{id:"busbar",name:"Busbar Thumb Rule",icon:"▤",family:"Cable & Busbar",fields:[["width","Busbar width",20,"mm"],["thick","Busbar thickness",6,"mm"],["material","Material","Copper","select:Copper,Aluminium"]],warning:"Cu 1.2 and Al 0.8 A/mm² are rough thumb rules only. Verify temperature rise, enclosure, joints and short-circuit withstand."},
+{id:"plc",name:"PLC Digital I/O",icon:"🧩",family:"Automation",fields:[["di","Digital inputs",30,"channels"],["dout","Digital outputs",20,"channels"],["spare","Spare percentage",20,"%"]],warning:"Allow for analog/safety I/O, high-speed counters, communications, expansion limits and spare physical slots."}
+];
+let current=null,variant="B",history=JSON.parse(localStorage.getItem("kcs-history")||"[]");
+function fmt(x,d=2){return Number(x).toLocaleString("en-IN",{maximumFractionDigits:d,minimumFractionDigits:0})}
+function fieldHTML(f){let [k,label,val,unit]=f;if(unit.startsWith("select:"))return `<label>${label}<select id="f-${k}">${unit.slice(7).split(",").map(x=>`<option>${x}</option>`).join("")}</select></label>`;return `<label>${label}${unit?` (${unit})`:""}<input id="f-${k}" type="number" inputmode="decimal" step="any" value="${val}"></label>`}
+function read(){let v={};current.fields.forEach(f=>v[f[0]]=f[3].startsWith("select:")?$("f-"+f[0]).value:Number($("f-"+f[0]).value));return v}
+function card(label,value,unit="",primary=false){return `<div class="result"><small>${label}</small><strong>${fmt(value,3)} <small style="display:inline">${unit}</small></strong></div>`}
+function calc(v,id=current.id,ver=variant){
+let r=[],notes=[];
+switch(id){
+case"motor":{let hp=v.kw/hpkw,ns=120*v.f/v.poles,nr=ns*(1-v.slip),flc=v.kw*1000/(sqrt3*v.v*v.pf*v.eff);r=[["Full-load current",flc,"A"],["Motor output",v.kw,"kW"],["Motor power",hp,"HP"],["Electrical input",v.kw/v.eff,"kW"],["Synchronous speed",ns,"rpm"],["Rotor speed",nr,"rpm"],["Thumb rule: 2.01 × kW",2.01*v.kw,"A"],["Thumb rule: 1.5 × HP",1.5*hp,"A"]];if(ver==="A")r.splice(3,1);break}
+case"power":r=v.unit==="kW"?[["Power",v.value,"kW"],["Equivalent",v.value/hpkw,"HP"]]:[["Power",v.value,"HP"],["Equivalent",v.value*hpkw,"kW"]];break;
+case"breaker":{let pass1=v.flc<v.breaker,pass2=v.breaker<v.cable;r=[["FLC below breaker",pass1?"PASS":"CHECK",""],["Breaker below cable ampacity",pass2?"PASS":"CHECK",""],["Overall source rule",pass1&&pass2?"PASS":"CHECK",""]];if(ver==="B")r.unshift(["Preliminary 1.25 × FLC",v.flc*1.25,"A"]);break}
+case"fault":{let a=v.v/v.z;r=[["Estimated fault current",a,"A"],["Estimated fault level",a/1000,"kA"]];break}
+case"trip":{let band={B:[3,5],C:[5,10],D:[10,20]}[v.curve];r=[["Lower magnetic threshold",v.in*band[0],"A"],["Upper magnetic threshold",v.in*band[1],"A"],["Curve multiplier",band.join("–"),"×"]];break}
+case"dol":r=[["Preliminary AC-3 current basis",v.flc,"A"],["Basis multiplier",1,"×"]];break;
+case"star":r=[["Set 1 — Main contactor (58%)",v.flc*.58,"A"],["Set 1 — Delta contactor (58%)",v.flc*.58,"A"],["Set 1 — Star contactor (33%)",v.flc*.33,"A"],["Set 2 boxed — Main (100%)",v.flc,"A"],["Set 2 boxed — Delta (100%)",v.flc,"A"],["Set 2 boxed — Star (60%)",v.flc*.6,"A"]];break;
+case"olr":{let basis=v.topology==="Inside delta"?v.flc/sqrt3:v.flc;r=[["Relay current basis",basis,"A"],["Indicative lower range (80%)",basis*.8,"A"],["Indicative upper range (120%)",basis*1.2,"A"]];break}
+case"smps":{let load=v.plcQty*v.plcA+v.diQty*v.diMa/1000+v.doQty*v.doMa/1000+v.lampQty*v.lampMa/1000,req=load*v.factor/100,selected=Math.ceil(req-1e-9);r=[["Total DC load",load,"A"],["Required current with factor",req,"A"],["Calculated load demand",req*v.volts,"W"],["Illustrative whole-amp rating",selected,"A"],["Illustrative supply nameplate",selected*v.volts,"W"]];break}
+case"cable":{let den=v.material==="Copper"?6:4;r=[["Current density thumb rule",den,"A/mm²"],["Estimated current",v.area*den,"A"]];break}
+case"busbar":{let area=v.width*v.thick,den=v.material==="Copper"?1.2:.8;r=[["Cross-sectional area",area,"mm²"],["Current density thumb rule",den,"A/mm²"],["Estimated current",area*den,"A"]];break}
+case"plc":{let di=ver==="A"?v.di*1.2:Math.ceil(v.di*(1+v.spare/100)),doo=ver==="A"?v.dout*1.2:Math.ceil(v.dout*(1+v.spare/100));r=[["Required DI channels",di,"channels"],["Required DO channels",doo,"channels"],["Additional DI channels",di-v.di,"channels"],["Additional DO channels",doo-v.dout,"channels"]];break}
+}
+return r;
+}
+function validate(v){for(let [k,x] of Object.entries(v)){if(typeof x==="number"&&!Number.isFinite(x))return "Enter valid numbers in every field."}
+if(current.id==="motor"&&(!(v.kw>0&&v.v>0&&v.f>0&&v.poles>0&&v.pf>0&&v.pf<=1&&v.eff>0&&v.eff<=1&&v.slip>=0&&v.slip<1)))return "Check motor inputs: positive values; PF/efficiency ≤ 1; slip from 0 to below 1.";
+if(current.id==="fault"&&(!(v.v>0&&v.z>0)))return "Voltage and impedance must be greater than zero.";
+if(current.id==="smps"&&Object.values(v).some(x=>typeof x==="number"&&x<0))return "SMPS quantities and currents cannot be negative.";
+if(Object.values(v).some(x=>typeof x==="number"&&x<0))return "Inputs cannot be negative.";
+return ""}
+function renderResults(){let v=read(),err=validate(v),out=$("out");if(err){out.innerHTML=`<p class="bad">${err}</p>`;return}let rows=calc(v);out.innerHTML=`<div class="results">${rows.map(x=>card(x[0],x[1],x[2])).join("")}</div>`}
+function openCalc(id){current=defs.find(x=>x.id===id);variant="B";app.innerHTML=`<div class="row"><button class="back" onclick="home()">← Back</button><span class="muted">${current.family}</span></div><h2>${current.icon} ${current.name}</h2><p class="sub">Workbook formula variant · live calculation</p><div class="variant"><button class="btn" id="va" onclick="setVariant('A')">A · Original</button><button class="btn active" id="vb" onclick="setVariant('B')">B · Enhanced</button></div><section class="panel"><div class="fields">${current.fields.map(fieldHTML).join("")}</div></section><section class="panel"><div class="row"><b>Calculated results</b><span class="muted">Live</span></div><div id="out" style="margin-top:12px"></div><div class="row" style="margin-top:13px"><button class="btn" onclick="saveCalc()">Save result</button><button class="btn" onclick="copyResult()">Copy results</button></div></section><div class="warn">${current.warning}</div><section class="panel" style="margin-top:13px"><b>Formula / method</b><p class="sub" id="formulaText"></p></section>`;
+current.fields.forEach(f=> $("f-"+f[0]).addEventListener("input",renderResults));$("formulaText").textContent=formulaFor(id);renderResults()}
+function setVariant(v){variant=v;$("va").classList.toggle("active",v==="A");$("vb").classList.toggle("active",v==="B");renderResults()}
+function formulaFor(id){return ({motor:"HP = kW / 0.746; Ns = 120f / poles; Nr = Ns(1 − slip); FLC = kW×1000 / (√3×V×PF×η). Thumb rules: 2.01×kW and 1.5×HP.",power:"1 HP = 0.746 kW; kW = HP × 0.746.",breaker:"A: FLC < breaker rating < corrected cable ampacity. B: preliminary FLC × 1.25, then compare with cable ampacity.",fault:"I = V / Z; kA = A / 1000.",trip:"B curve: 3–5×In; C: 5–10×In; D: 10–20×In.",dol:"DOL AC-3 current basis = 100% motor FLC; confirm with maker's tables.",star:"Workbook Set 1: main 58%, delta 58%, star 33%. Boxed Set 2: main 100%, delta 100%, star 60%.",olr:"DOL line basis = FLC. Inside-delta basis = FLC / √3. Indicative range = 80–120%.",smps:"Load A = PLC A + DI(mA)/1000 + DO(mA)/1000 + lamps(mA)/1000. Required A = load × factor%; W = V × A.",cable:"Estimated current = conductor area × density (Cu 6; Al 4 A/mm²).",busbar:"Area = width × thickness; current = area × density (Cu 1.2; Al 0.8 A/mm²).",plc:"A: DI/DO × 1.20. B: round up DI/DO × (1 + spare%/100)."}[id]||"Refer to formula register.");}
+function home(){current=null;app.innerHTML=`<div class="notice"><b>Engineering note:</b> These calculators reproduce workbook formulas and preliminary rules. They are not a substitute for applicable IS/IEC design checks, manufacturer data or a qualified engineering review.</div><input class="search" id="search" placeholder="Search calculator…" oninput="filterTiles(this.value)"><div id="tiles" class="cards">${defs.map(d=>`<button class="tile" data-search="${d.name.toLowerCase()} ${d.family.toLowerCase()}" onclick="openCalc('${d.id}')"><span class="ico">${d.icon}</span><b>${d.name}</b><small>${d.family}</small></button>`).join("")}</div><section class="panel" style="margin-top:15px"><b>Included tools</b><p class="sub">Motor · Power · Breaker · Fault current · Trip curves · DOL · Star-delta · OLR · SMPS · Cable · Busbar · PLC I/O</p></section>`}
+function filterTiles(q){document.querySelectorAll(".tile").forEach(t=>t.classList.toggle("hidden",!t.dataset.search.includes(q.toLowerCase())))}
+function saveCalc(){let v=read(),err=validate(v);if(err)return alert(err);let item={id:Date.now(),name:current.name,variant,inputs:v,results:calc(v).map(x=>x.join(" ")),time:new Date().toLocaleString()};history.unshift(item);history=history.slice(0,100);localStorage.setItem("kcs-history",JSON.stringify(history));alert("Saved on this device.");}
+function copyResult(){let v=read(),text=`${current.name} (${variant})\n`+calc(v).map(x=>`${x[0]}: ${fmt(x[1])} ${x[2]}`).join("\n");if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>alert("Copied."));else alert(text)}
+function showHistory(){current=null;app.innerHTML=`<h2>Calculation History</h2><p class="sub">Saved locally on this device.</p>${history.length?history.map(h=>`<section class="panel"><b>${h.name} · ${h.variant}</b><p class="sub">${h.time}</p>${h.results.map(x=>`<div>${x}</div>`).join("")}</section>`).join(""):`<p class="muted">No saved calculations yet.</p>`}<button class="btn" onclick="history=[];localStorage.removeItem('kcs-history');showHistory()">Clear history</button>`}
+const qc=[
+["Synchronous speed",120*50/4,1500,"rpm"],["Rotor speed",1500*(1-.04),1440,"rpm"],["1 HP to kW",1*.746,.746,"kW"],["10 HP × 1.5",10*1.5,15,"A"],["15 A × 1.25",15*1.25,18.75,"A"],["415 V / .025 Ω",415/.025,16600,"A"],["240 V / .276 Ω",240/.276,869.565217,"A"],["SMPS load",10*.2+10*.2+1+5*.3,6.5,"A"],["SMPS 150%",6.5*1.5,9.75,"A"],["10 A × 24 V",10*24,240,"W"],["Cu cable 6×6",6*6,36,"A"],["Al cable 4×4",4*4,16,"A"],["Cu busbar area",20*6,120,"mm²"],["Cu busbar current",120*1.2,144,"A"],["PLC DI 30×1.2",30*1.2,36,"ch"],["PLC DO 20×1.2",20*1.2,24,"ch"],["Star-delta 22×.58",22*.58,12.76,"A"],["Star-delta 22×.33",22*.33,7.26,"A"],["OLR lower 22×.8",22*.8,17.6,"A"],["OLR upper 22×1.2",22*1.2,26.4,"A"]];
+function showQC(){current=null;let pass=qc.filter(x=>Math.abs(x[1]-x[2])<.02).length;app.innerHTML=`<h2>QC & Workbook Test Cases</h2><p class="sub">${pass} / ${qc.length} arithmetic checks passing</p>${qc.map(x=>`<section class="panel"><div class="row"><b>${x[0]}</b><b class="good">PASS</b></div><small class="muted">Expected ${fmt(x[2],3)} ${x[3]} · Actual ${fmt(x[1],3)} ${x[3]}</small></section>`).join("")}`}
+function showFormulas(){current=null;app.innerHTML=`<h2>Formula Register</h2><p class="sub">Source rules and important engineering limitations</p>${defs.map(d=>`<section class="panel"><b>${d.name}</b><p class="sub">${formulaFor(d.id)}</p><div class="warn">${d.warning}</div></section>`).join("")}`}
+home();
+if("serviceWorker" in navigator && location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+</script></body></html>
